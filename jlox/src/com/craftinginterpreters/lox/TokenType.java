@@ -11,6 +11,8 @@ enum TokenType {
     MINUS,
     PLUS,
     SEMICOLON,
+    COLON,
+    QUESTION,
     SLASH,
     STAR,
 

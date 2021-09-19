@@ -82,6 +82,12 @@ public class Scanner {
             case ';':
                 addToken(SEMICOLON);
                 break;
+            case ':':
+                addToken(COLON);
+                break;
+            case '?':
+                addToken(QUESTION);
+                break;
             case '*':
                 addToken(STAR);
                 break;
@@ -95,7 +101,7 @@ public class Scanner {
                 addToken(match('=') ? LESS_EQUAL : LESS);
                 break;
             case '>':
-                addToken(match('>') ? GREATER_EQUAL : GREATER);
+                addToken(match('=') ? GREATER_EQUAL : GREATER);
                 break;
             //
             case '/':

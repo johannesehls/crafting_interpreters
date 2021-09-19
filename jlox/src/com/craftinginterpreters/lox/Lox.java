@@ -10,8 +10,11 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class Lox {
+    private static final Interpreter interpreter = new Interpreter();
     // field used to make sure no code with a known error in it gets executed
     static boolean hadError = false;
+
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
         if (args.length > 1) {
@@ -40,7 +43,12 @@ public class Lox {
         run(new String(bytes, Charset.defaultCharset()));
 
         // Exit code indicates that: "The input data was incorrect in some way."
-        if (hadError) System.exit(65);
+        if (hadError) {
+            System.exit(65);
+        }
+        if (hadRuntimeError) {
+            System.exit(70);
+        }
     }
 
     /**
@@ -53,7 +61,7 @@ public class Lox {
         InputStreamReader input = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(input);
 
-        for (;;) {
+        for (; ; ) {
             System.out.print("> ");
             String line = reader.readLine();
             if (line == null) break;
@@ -70,17 +78,24 @@ public class Lox {
      * @param source
      */
     private static void run(String source) {
+        // Scanning phase.
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        // print tokens for testing purposes
-        for (Token token : tokens) {
-            System.out.println(token);
+        // Parsing phase.
+        Parser parser = new Parser(tokens);
+        Expr expression = parser.parse();
+
+        // Stop if there was a syntax error.
+        if (hadError) {
+            return;
         }
+
+        interpreter.interpret(expression);
     }
 
     /**
-     * Function for error handling.
+     * Function for error handling for the Scanner (line number).
      *
      * @param line
      * @param message
@@ -89,10 +104,33 @@ public class Lox {
         report(line, "", message);
     }
 
+    /**
+     * Function for RuntimeError handling for the Interpreter.
+     *
+     * @param error
+     */
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
+        hadRuntimeError = true;
+    }
+
     // Some helper function for the error function above.
     private static void report(int line, String where, String message) {
         System.err.println("[line " + line + "] Error" + where + ": " + message);
         hadError = true;
     }
 
+    /**
+     * Function for error handling for the Parser (Token).
+     *
+     * @param token
+     * @param message
+     */
+    static void error(Token token, String message) {
+        if (token.type == TokenType.EOF) {
+            report(token.line, " at end", message);
+        } else {
+            report(token.line, " at '" + token.lexeme + "'", message);
+        }
+    }
 }

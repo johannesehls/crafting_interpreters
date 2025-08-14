@@ -6,7 +6,11 @@ import java.util.List;
 import static com.craftinginterpreters.lox.TokenType.*;
 
 /*
- * program       → statement* EOF ;
+ * program       → declaration* EOF ;
+ *
+ * declaration   → varDecl | statement ;
+ *
+ * varDecl       → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
  * statement     → exprStmt | printStmt ;
  *
@@ -14,7 +18,9 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * printStmt     → "print" expression ";" ;
  *
  * expression    → comma ;
- * comma         → ternary ( "," ternary )* ;
+ * comma         → assignment ( "," assignment)* ;
+ * assignment    → IDENTIFIER "=" assignment
+ *               | ternary ;
  * ternary       → equality ( "?" expression ":" ternary )?
  * equality      → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison    → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
@@ -22,7 +28,7 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * factor        → unary ( ( "/" | "*" ) unary )* ;
  * unary         → ("!"|"-")unary | primary ;
  * primary       → NUMBER | STRING | "true" | "false" | "nil"
- *                 | "(" expression ")"
+ *                 | "(" expression ")" | IDENTIFIER
  *                 // Error productions...
  *                 | ( "!=" | "==" ) equality
  *                 | ( ">" | ">=" | "<" | "<=" ) comparison
@@ -51,9 +57,33 @@ class Parser {
     // Method that kicks off parsing an expression.
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
-        while (!isAtEnd()) { statements.add(statement()); }
+        while (!isAtEnd()) {
+            statements.add(declaration());
+        }
 
         return statements;
+    }
+
+    private Stmt declaration() {
+        try {
+            if (match(VAR)) return varDeclaration();
+            return statement();
+        } catch (ParseError error) {
+            synchronize();
+            return null;
+        }
+    }
+
+    private Stmt varDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+
+        Expr initializer = null;
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+
+        consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
     }
 
     private Stmt statement() {
@@ -81,7 +111,25 @@ class Parser {
 
     private Expr comma() {
         // Try to handle with "binaryHelper" method
-        return binaryHelper(this::ternary, COMMA);
+        return binaryHelper(this::assignment, COMMA);
+    }
+
+    private Expr assignment() {
+        Expr expr = ternary();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = ternary();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private Expr ternary() {
@@ -200,6 +248,10 @@ class Parser {
 
         if (match(NUMBER, STRING)) {
             return new Expr.Literal(previous().literal);
+        }
+
+        if (match(IDENTIFIER)) {
+            return new Expr.Variable(previous());
         }
 
         if (match(LEFT_PAREN)) {

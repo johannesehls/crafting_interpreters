@@ -3,6 +3,8 @@ package com.craftinginterpreters.lox;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    private Environment environment = new Environment();
+
     // Interpreters public API method.
     void interpret(List<Stmt> statements) {
         try {
@@ -18,7 +20,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     // Statements:
 
-    // Expression Statement.
+    // Variable statement.
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    // Expression statement.
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
@@ -37,13 +51,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     // Expressions:
 
-    // Literal Expression.
+    // Literal expression.
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
     }
 
-    // Unary Expression.
+    // Unary expression.
     @Override
     public Object visitUnaryExpr(Expr.Unary expr) {
         Object right = evaluate(expr.right);
@@ -60,7 +74,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    // Binary Expression.
+    // Binary expression.
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
         // Evaluation of operands in left-to-right order (caution if operands have side effects).
@@ -115,7 +129,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
-    // Ternary Expression.
+    // Ternary expression.
     @Override
     public Object visitTernaryExpr(Expr.Ternary expr) {
         if (isTruthy(evaluate(expr.expr))) {
@@ -123,6 +137,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } else {
             return evaluate(expr.elseBranch);
         }
+    }
+
+    // Variable expression.
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
+    }
+
+    // Assignment expression.
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
     }
 
     // --------------------------- Private Helper Methods ---------------------------

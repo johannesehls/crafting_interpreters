@@ -49,6 +49,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
+    // Block statement.
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
     // Expressions:
 
     // Literal expression.
@@ -154,6 +161,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     // --------------------------- Private Helper Methods ---------------------------
+
+    // Method for executing a block.
+    private void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;    // save current env.
+        try {
+            this.environment = environment;         // set current to new env.
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {                                 // Executes even if exception thrown.
+            this.environment = previous;            // restore to previous env.
+        }
+    }
 
     // Method for dynamic type-checking unary expressions.
     private void checkNumberOperand(Token operator, Object operand) {

@@ -1,10 +1,17 @@
 package com.craftinginterpreters.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 
 /*
+ * program       → statement* EOF ;
+ *
+ * statement     → exprStmt | printStmt ;
+ *
+ * exprStmt      → expression ";" ;
+ * printStmt     → "print" expression ";" ;
  *
  * expression    → comma ;
  * comma         → ternary ( "," ternary )* ;
@@ -42,12 +49,30 @@ class Parser {
     }
 
     // Method that kicks off parsing an expression.
-    Expr parse() {
-        try {
-            return expression();
-        } catch (ParseError error) {
-            return null;
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd()) { statements.add(statement()); }
+
+        return statements;
+    }
+
+    private Stmt statement() {
+        if (match(PRINT)) {
+            return printStatement();
         }
+        return expressionStatement();
+    }
+
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Expression(expr);
+    }
+
+    private Stmt printStatement() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
     }
 
     private Expr expression() {
@@ -222,25 +247,19 @@ class Parser {
     }
 
     private Token consume(TokenType type, String message) {
-        if (check(type)) {
-            return advance();
-        }
+        if (check(type)) { return advance(); }
         throw error(peek(), message);
     }
 
     // Returns true if the current token is of the given type.
     private boolean check(TokenType type) {
-        if (isAtEnd()) {
-            return false;
-        }
+        if (isAtEnd()) { return false; }
         return peek().type == type;
     }
 
     // Consumes the current token and returns it.
     private Token advance() {
-        if (!isAtEnd()) {
-            current++;
-        }
+        if (!isAtEnd()) { current++; }
         return previous();
     }
 

@@ -1,0 +1,15 @@
+Stuff one could add to the language:
+
+- Integers?
+- Typing
+- bitwise, shift, modulo, or conditional operators
+- do-while loops?
+- for-in loops
+- Transfer built-in types to real objects?
+- std library: e.g. -> String manipulation, trigonometric functions, file I/O, networking, reading input from the user
+- Error handling: Show user where exactly the error occurred in the source code! (^-- Here.)
+    - Token needs more than just line number then...
+    - ErrorReporter interface or similar: Passed to scanner / parser; enabling swapping out error reporting strategies
+- Strings with escape sequences
+
+

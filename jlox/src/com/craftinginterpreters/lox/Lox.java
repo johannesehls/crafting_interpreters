@@ -40,7 +40,7 @@ public class Lox {
      */
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
-        run(new String(bytes, Charset.defaultCharset()));
+        run(new String(bytes, Charset.defaultCharset()), false);
 
         // Exit code indicates that: "The input data was incorrect in some way."
         if (hadError) {
@@ -65,7 +65,7 @@ public class Lox {
             System.out.print("> ");
             String line = reader.readLine();
             if (line == null) break;
-            run(line);
+            run(line, true);
 
             // Do not kill the session because one line of code had some error
             hadError = false;
@@ -77,7 +77,7 @@ public class Lox {
      *
      * @param source
      */
-    private static void run(String source) {
+    private static void run(String source, boolean printExpr) {
         // Scanning phase.
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
@@ -91,7 +91,7 @@ public class Lox {
             return;
         }
 
-        interpreter.interpret(statements);
+        interpreter.interpret(statements, new Interpreter.Config(printExpr));
     }
 
     /**

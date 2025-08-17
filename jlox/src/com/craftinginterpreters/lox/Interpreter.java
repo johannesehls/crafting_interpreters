@@ -3,10 +3,15 @@ package com.craftinginterpreters.lox;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    static record Config(boolean printExpr){};
+    private static final Config defaultConf = new Config(false);
+    private Config config = defaultConf;
+
     private Environment environment = new Environment();
 
     // Interpreters public API method.
-    void interpret(List<Stmt> statements) {
+    void interpret(List<Stmt> statements, Config config) {
+        this.config = (config != null) ? config : defaultConf;      // Set config.
         try {
             for (Stmt statement : statements) {
                 execute(statement);
@@ -35,7 +40,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     // Expression statement.
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
-        evaluate(stmt.expression);
+        Object value = evaluate(stmt.expression);
+        if (config.printExpr) System.out.println(stringify(value)); // Print if in REPL.
         // Following line is required due to the special "Void" return type.
         return null;
     }

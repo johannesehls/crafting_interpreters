@@ -1,11 +1,14 @@
 package com.craftinginterpreters.lox;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class Environment {
     final Environment enclosing;
     private final Map<String, Object> values = new HashMap<>();
+    private final Set<String> initialized = new HashSet<>();
 
     Environment() {
         enclosing = null;
@@ -22,6 +25,7 @@ public class Environment {
     void assign(Token name, Object value) {
         if (values.containsKey(name.lexeme)) {
             values.put(name.lexeme, value);
+            initialized.add(name.lexeme);
             return;
         }
 
@@ -35,11 +39,19 @@ public class Environment {
 
     Object get(Token name) {
         if (values.containsKey(name.lexeme)) {
+            if (!initialized.contains(name.lexeme)) {
+                throw new RuntimeError(name,
+                        "Accessing uninitialized variable '" + name.lexeme + "'.");
+            }
             return values.get(name.lexeme);
         }
 
         if (enclosing != null) return enclosing.get(name);
 
         throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
+    }
+
+    void setInitialized(String name) {
+        this.initialized.add(name);
     }
 }

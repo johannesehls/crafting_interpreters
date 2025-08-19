@@ -1,22 +1,25 @@
 # Crafting Interpreters
 
-A personal implementation of [*Crafting Interpreters*](https://craftinginterpreters.com/) by Robert Nystrom. This includes two implementations for the `lox` programming language: one in `Java` and another one focusing on performance in `C`. 
+My implementations of the `lox` programming language from the book [*Crafting Interpreters*](https://craftinginterpreters.com/) by Robert Nystrom. This includes two implementations: 
+- one in `Java` called `Jlox` and 
+- another one in `C` called `Clox` focusing more on performance than the former. 
 
-## Jlox (Chapters 1–13)
+## Jlox
 
-`Jlox` is the high-level language interpreter built using a tree-walk approach. It emphasizes readability and simplicity, guiding the foundational stages of language parsing, analysis, and execution.
+`Jlox` is the high-level language interpreter built using a tree-walk approach. It emphasizes readability and simplicity, guiding the foundational stages of lexical analysis, language parsing, and execution.
 
-Completed so far (up to Chapter 7):
+Completed so far (up to Chapter 8):
 - Scanner (lexical analysis)
 - Parser (syntax analysis)
 - Expression evaluation
+- Statements and State (Variables, Blocks, etc.)
 
 Planned:
-- Complete Jlox with tree-walk interpreter and runtime (Chapters 8–13)
+- Complete Jlox with tree-walk interpreter and runtime (Chapters 9–13)
 
 ---
 
-## Clox (Chapters 14–30)
+## Clox
 
 Next phase: building a bytecode virtual machine and compiler in `C` for the lox language (`Clox`).
 

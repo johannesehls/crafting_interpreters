@@ -23,7 +23,9 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * comma         → assignment ( "," assignment)* ;
  * assignment    → IDENTIFIER "=" assignment
  *               | ternary ;
- * ternary       → equality ( "?" expression ":" ternary )?
+ * ternary       → logic_or ( "?" expression ":" ternary )?
+ * logic_or      → logic_and ( "or" logic_and )* ;
+ * logic_and     → equality ( "and" equality )* ;
  * equality      → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison    → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term          → factor ( ( "-" | "+" ) factor )* ;
@@ -159,13 +161,37 @@ class Parser {
     }
 
     private Expr ternary() {
-        Expr expr = equality();
+        Expr expr = logicOr();
 
         if (match(QUESTION)) {
             Expr thenBranch = expression();
             consume(COLON, "Expect ':' after then branch of conditional expression.");
             Expr elseBranch = ternary();
             expr = new Expr.Ternary(expr, thenBranch, elseBranch);
+        }
+
+        return expr;
+    }
+
+    private Expr logicOr() {
+        Expr expr = logicAnd();
+
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = logicAnd();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr logicAnd() {
+        Expr expr = equality();
+
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
         }
 
         return expr;

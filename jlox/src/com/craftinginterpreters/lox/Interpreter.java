@@ -164,6 +164,23 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
 
+    // Logical expression.
+    @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+
+        if (expr.operator.type == TokenType.OR) {
+            // OR: short-circuit to left if already true
+            if (isTruthy(left)) return left;
+        } else {
+            // AND: short-circuit to left if already false
+            if (!isTruthy(left)) return left;
+        }
+
+        // Other cases.
+        return evaluate(expr.right);
+    }
+
     // Variable expression.
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
@@ -215,6 +232,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         if (object == null) {
             return false;
         }
+        // TODO: may need to check the value of the object here instead!
         if (object instanceof Boolean) {
             return (boolean) object;
         }

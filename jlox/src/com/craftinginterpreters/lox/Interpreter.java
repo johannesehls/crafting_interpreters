@@ -3,6 +3,16 @@ package com.craftinginterpreters.lox;
 import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+    // Exception for 'break' control flow statements in loops.
+    private static class BreakException extends RuntimeException {
+        final Token token;
+
+        BreakException(Token token) {
+            super();
+            this.token = token;
+        }
+    };
+
     static record Config(boolean printExpr){};
     private static final Config defaultConf = new Config(false);
     private Config config = defaultConf;
@@ -14,7 +24,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         this.config = (config != null) ? config : defaultConf;      // Set config.
         try {
             for (Stmt statement : statements) {
-                execute(statement);
+                try {
+                    execute(statement);
+                } catch (BreakException b) {
+                    throw new RuntimeError(b.token, "Usage of keyword 'break' outside of loop context.");
+                }
             }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
@@ -71,9 +85,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
         while (isTruthy(evaluate(stmt.condition))) {
-            execute(stmt.body);
+            try {
+                execute(stmt.body);
+            } catch (BreakException b) {
+                break;
+            }
         }
         return null;
+    }
+
+    // Break statement.
+    @Override
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        throw new BreakException(stmt.token);
     }
 
     // Block statement.

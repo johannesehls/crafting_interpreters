@@ -39,11 +39,12 @@ public class Environment {
 
     Object get(Token name) {
         if (values.containsKey(name.lexeme)) {
-            if (!initialized.contains(name.lexeme)) {
+            Object value = values.get(name.lexeme);
+            if (!initialized.contains(name.lexeme) && !(value instanceof LoxFunction)) {
                 throw new RuntimeError(name,
                         "Accessing uninitialized variable '" + name.lexeme + "'.");
             }
-            return values.get(name.lexeme);
+            return value;
         }
 
         if (enclosing != null) return enclosing.get(name);

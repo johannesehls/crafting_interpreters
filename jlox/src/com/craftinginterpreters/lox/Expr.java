@@ -7,11 +7,13 @@ abstract class Expr {
         R visitTernaryExpr(Ternary expr);
         R visitAssignExpr(Assign expr);
         R visitBinaryExpr(Binary expr);
+        R visitCallExpr(Call expr);
         R visitGroupingExpr(Grouping expr);
         R visitLiteralExpr(Literal expr);
         R visitLogicalExpr(Logical expr);
         R visitUnaryExpr(Unary expr);
         R visitVariableExpr(Variable expr);
+        R visitLambdaExpr(Lambda expr);
     }
     static class Ternary extends Expr {
         Ternary(Expr expr, Expr thenBranch, Expr elseBranch) {
@@ -58,6 +60,22 @@ abstract class Expr {
         final Expr left;
         final Token operator;
         final Expr right;
+    }
+    static class Call extends Expr {
+        Call(Expr callee, Token paren, List<Expr> arguments) {
+            this.callee = callee;
+            this.paren = paren;
+            this.arguments = arguments;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitCallExpr(this);
+        }
+
+        final Expr callee;
+        final Token paren;
+        final List<Expr> arguments;
     }
     static class Grouping extends Expr {
         Grouping(Expr expression) {
@@ -124,6 +142,18 @@ abstract class Expr {
         }
 
         final Token name;
+    }
+    static class Lambda extends Expr {
+        Lambda(Stmt function) {
+            this.function = function;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitLambdaExpr(this);
+        }
+
+        final Stmt function;
     }
 
     abstract <R> R accept(Visitor<R> visitor);
